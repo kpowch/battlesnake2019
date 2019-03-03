@@ -41,16 +41,14 @@ app.post('/move', (request, response) => {
 
   const you = request.body.you
   const head = you.body[0]
-  console.log('head', head)
 
-  let availableMoves = ['up', 'left', 'down', 'right']
-  console.log("head['x']", head['x'])
-  console.log("head['y']", head['y'])
-
-  availableMoves = examineWall(availableMoves, head)
-  console.log('examineWall', examineWall(availableMoves, head))
+  availableMoves = ['up', 'right', 'down', 'left']
+  availableMoves = avoidWalls(availableMoves, head, board)
+  availableMoves = avoidSelf(availableMoves, head, you.body)
+  // availableMoves = avoidOtherSnakes(availableMoves, head, board.snakes)
 
   console.log('availableMoves', availableMoves)
+  console.log('availableMoves[0]', availableMoves[0])
 
   // Response data
   const data = {
@@ -60,31 +58,78 @@ app.post('/move', (request, response) => {
   return response.json(data)
 })
 
-const examineWall = (availableMoves, position) => {
-  console.log('position[x]', position['x'])
-  console.log('position[y]', position['y'])
+const avoidOtherSnakes = (availableMoves, position, snakes) => {
+  console.log('snakes', snakes)
+  snakes.forEach(function (snake) {
+    console.log('snake body', snake.body)
+  })
+  let possiblePosition = position
+  console.log('availableMoves', availableMoves)
+  availableMoves = availableMoves.filter(function (move) {
+    if (move === 'up') {
+      possiblePosition = { x: x, y: y - 1 }
+    } else if (move === 'down') {
+      possiblePosition = { x: x, y: y + 1 }
+    } else if (move === 'right') {
+      possiblePosition = { x: x + 1, y: y }
+    } else if (move === 'left') {
+      possiblePosition = { x: x - 1, y: y }
+    }
+    snakes.forEach(function (snake) {
+      console.log('snake body', snake.body)
+    })
+  })
+}
+
+const avoidSelf = (availableMoves, position, body) => {
+  let x = position['x']
+  let y = position['y']
+
+  let possiblePosition = position
+  availableMoves = availableMoves.filter(function (move) {
+    if (move === 'up') {
+      possiblePosition = { x: x, y: y - 1 }
+    } else if (move === 'down') {
+      possiblePosition = { x: x, y: y + 1 }
+    } else if (move === 'right') {
+      possiblePosition = { x: x + 1, y: y }
+    } else if (move === 'left') {
+      possiblePosition = { x: x - 1, y: y }
+    }
+    return body.find(function (element) {
+      return element.x === possiblePosition.x && element.y === possiblePosition.y
+    }) === undefined
+  })
+
+  console.log('after', availableMoves)
+  return availableMoves
+}
+
+const avoidWalls = (availableMoves, position, board) => {
+  let x = position['x']
+  let y = position['y']
 
   // leftWall = when x is 0
-  if (position['x'] === 0) {
-    console.log("hitting position['x'] === 0)")
+  if (x === 0) {
+    console.log('hitting x === 0)')
     availableMoves = availableMoves.filter(value => value !== 'left')
   }
-  // rightWall = when x is board.width
-  if (position['x'] === board.width) {
-    console.log("hitting position['x'] === board.width)")
+  // rightWall = when x is board.width - 1
+  if (x === board.width - 1) {
+    console.log('hitting x === board.width - 1)')
     availableMoves = availableMoves.filter(value => value !== 'right')
   }
   // topWall = when y is 0
-  if (position['y'] === 0) {
-    console.log("hitting position['y'] === 0)")
+  if (y === 0) {
+    console.log('hitting y === 0)')
     availableMoves = availableMoves.filter(value => value !== 'up')
   }
-  // bottomWall = when y is board.height
-  if (position['y'] === board.height) {
-    console.log("hitting position['y'] === board.height)")
+  // bottomWall = when y is board.height - 1
+  if (y === board.height - 1) {
+    console.log('hitting y === board.height - 1)')
     availableMoves = availableMoves.filter(value => value !== 'down')
   }
-  console.log('here', availableMoves)
+
   return availableMoves
 }
 
